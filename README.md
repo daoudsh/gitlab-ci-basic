@@ -38,6 +38,7 @@ $ git remote set-url origin YOUR-GITLAB-URL-REPO
 	![pipeline status](img/pipeline_status.JPG)
 	![coverage report](img/coverage_report.JPG)
 5. configure gitlab to search for the coverage status: gitlab -> YOUR-REPO -> Settings -> CI / CD -> General pipelines
+set the "Test Coverage Parsing" = \d+.\d+ \% covered
 ![coverage configure](img/coverage_conf.JPG)
 6. push the changes
 ```sh   

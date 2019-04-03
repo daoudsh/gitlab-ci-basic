@@ -1,0 +1,67 @@
+cache:
+  key: ${CI_COMMIT_REF_SLUG} # sharing caches across the same branch
+  paths:
+    - .m2/
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2"
+
+build:
+  image: maven:3.6.0-jdk-8-alpine 
+  stage: build
+  tags: [run01_docker]
+  script:
+    - mvn compile
+java:
+  image: maven:3.6.0-jdk-8-alpine
+  stage: test
+  tags: [run01_docker]
+  script:
+    - mvn verify
+    - ls -al target/
+    - awk -F"," '{ instructions += $4 + $5; covered += $5 } END { print covered, "/", instructions, " > instructions covered"; print 100*covered/instructions, "% covered" }' target/site/jacoco/jacoco.csv
+#  coverage: '/Code coverage: cat target/site/jacoco/index.html | grep -o 'Total[^%]*%' '
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+
+#        - target/failsafe-reports/TEST-*.xml
+##deploy:
+##  image: rastasheep/ubuntu-sshd
+##  tags: [run01_docker]
+##  stage: deploy
+##  script:
+##    - ls -al
+##    - ssh -vvv -tt -L 22:10.255.138.238:22 daoud@80.146.205.194
+#    - set +x
+#    - echo $KEY > ~/.ssh/id_rsa
+#    - set -x 
+#    - ls -al
+#    - chmod 600 ~/.ssh/id_rsa
+#    - eval $(ssh-agent -s)
+#    - chmod 600 ~/.ssh/id_rsa
+#    - ls -al ~/.ssh/
+#    - ssh-add -l
+#    - ssh-add ~/.ssh/id_rsa
+##    - ssh -A -T daoud@$OSCA3_IP << EOF
+##      ls -al
+##       EOF
+       
+       
+before_script:
+  - echo $CI_COMMIT_REF_NAME
+  # cfr. https://docs.gitlab.com/ee/ci/ssh_keys/README.html
+  # Install ssh-agent if not already installed, it is required by Docker.
+  # (change apt-get to yum if you use a CentOS-based image)
+  - 'which ssh-agent || ( apk  update -y && apk add openssh-client -y )'
+
+  # Run ssh-agent (inside the build environment)
+  - eval $(ssh-agent -s)
+
+  # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+  - ssh-add <(echo "$KEY" | base64 -d)
+##  - chmod 600 ~/.ssh/id_rsa && chmod 700 ~/.ssh
+  - pwd
+  - whoami
+  - ls -al ~/
